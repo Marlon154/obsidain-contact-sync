@@ -92,12 +92,15 @@ export class CardDAVClient {
     
             if (!uid || !fullName) return null;
     
+            console.log(birthdayProp.toString());
             let birthday: string | undefined;
             if (birthdayProp) {
                 const birthdayValue = birthdayProp.getFirstValue();
                 if (birthdayValue instanceof ICAL.Time) {
                     // If it's an ICAL.Time object, format it as YYYY-MM-DD
-                    birthday = birthdayValue.toJSDate().toISOString().split('T')[0];
+                    birthday = `${birthdayValue.year.toString().padStart(4, '0')}-${
+                        (birthdayValue.month).toString().padStart(2, '0')}-${
+                        birthdayValue.day.toString().padStart(2, '0')}`;
                 } else if (typeof birthdayValue === 'string') {
                     // If it's a string, try to parse it
                     const parts = birthdayValue.split('-');
@@ -111,14 +114,22 @@ export class CardDAVClient {
                 }
             }
     
+            const formatField = (field: string | string[] | undefined): string => {
+                if (Array.isArray(field)) {
+                    const nonEmptyValues = field.filter(v => v && v.trim() !== '');
+                    return nonEmptyValues.length > 0 ? nonEmptyValues.join(', ') : "";
+                }
+                return field && field.trim() !== '' ? field : "";
+            };
+                
             return { 
                 uid, 
                 fullName, 
                 email, 
                 phone, 
-                organization: Array.isArray(organization) ? organization.join(', ') : organization,
+                organization: formatField(organization),
                 title,
-                address: Array.isArray(address) ? address.join(', ') : address,
+                address: formatField(address),
                 birthday,
                 url
             };
@@ -156,10 +167,11 @@ export class CardDAVClient {
         if (contact.phone) vCard.addPropertyWithValue('tel', contact.phone);
 
         const vcardString = vCard.toString();
-
+/**
         await this.makeRequest('PUT', this.getFullUrl(`${contact.uid}.vcf`), {
             'Content-Type': 'text/vcard; charset=utf-8'
         });
+ */
     }
 
     private getFullUrl(path: string): string {
