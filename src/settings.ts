@@ -1,5 +1,21 @@
-import { App, PluginSettingTab, Setting, Notice, TextComponent } from 'obsidian';
+import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import CardDAVSyncPlugin from './main';
+
+export interface CardDAVSyncSettings {
+    serverUrl: string;
+    username: string;
+    password: string;
+    syncInterval: number;
+    contactsPath: string;
+}
+
+export const DEFAULT_SETTINGS: CardDAVSyncSettings = {
+    serverUrl: '',
+    username: '',
+    password: '',
+    syncInterval: 30,
+    contactsPath: 'Contacts'
+}
 
 export class CardDAVSyncSettingTab extends PluginSettingTab {
     plugin: CardDAVSyncPlugin;
@@ -42,7 +58,7 @@ export class CardDAVSyncSettingTab extends PluginSettingTab {
             .setName('Password')
             .setDesc('Enter your CardDAV password')
             .addText(text => {
-                (text as TextComponent).inputEl.type = 'password';
+                text.inputEl.type = 'password';
                 text.setPlaceholder('password')
                     .setValue(this.plugin.settings.password)
                     .onChange(async (value) => {
@@ -51,6 +67,17 @@ export class CardDAVSyncSettingTab extends PluginSettingTab {
                     });
             });
 
+        new Setting(containerEl)
+            .setName('Contacts Storage Path')
+            .setDesc('Choose where to store synced contacts')
+            .addText(text => text
+                .setPlaceholder('Contacts')
+                .setValue(this.plugin.settings.contactsPath)
+                .onChange(async (value) => {
+                    this.plugin.settings.contactsPath = value;
+                    await this.plugin.saveSettings();
+                }));
+        
         new Setting(containerEl)
             .setName('Sync Interval')
             .setDesc('Set the interval for automatic sync (in minutes, 0 to disable)')

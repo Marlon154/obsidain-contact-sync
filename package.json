@@ -2,7 +2,7 @@
 	"name": "obsidian-carddav-sync",
 	"version": "1.0.0",
 	"description": "Sync CardDAV contacts with Obsidian notes",
-	"main": "main.js",
+	"main": "src/main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
@@ -22,6 +22,7 @@
 		"typescript": "4.7.4"
 	},
 	"dependencies": {
+		"@popperjs/core": "^2.11.8",
 		"ical.js": "^2.0.1"
 	}
 }

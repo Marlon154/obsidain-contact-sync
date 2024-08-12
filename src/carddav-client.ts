@@ -1,12 +1,16 @@
 import ICAL from 'ical.js';
-import { requestUrl, RequestUrlResponse, Notice } from 'obsidian';
+import { requestUrl, RequestUrlResponse } from 'obsidian';
 
 export interface CardDAVContact {
     uid: string;
     fullName: string;
     email: string;
     phone: string;
-    // Add more fields as needed
+    organization?: string;
+    title?: string;
+    address?: string;
+    birthday?: string;
+    url?: string;
 }
 
 export class CardDAVClient {
@@ -75,15 +79,49 @@ export class CardDAVClient {
         try {
             const jCal = ICAL.parse(vcardData);
             const vCard = new ICAL.Component(jCal);
-
+    
             const uid = vCard.getFirstPropertyValue('uid');
             const fullName = vCard.getFirstPropertyValue('fn');
             const email = vCard.getFirstPropertyValue('email');
             const phone = vCard.getFirstPropertyValue('tel');
-
+            const organization = vCard.getFirstPropertyValue('org');
+            const title = vCard.getFirstPropertyValue('title');
+            const address = vCard.getFirstPropertyValue('adr');
+            const birthdayProp = vCard.getFirstProperty('bday');
+            const url = vCard.getFirstPropertyValue('url');
+    
             if (!uid || !fullName) return null;
-
-            return { uid, fullName, email, phone };
+    
+            let birthday: string | undefined;
+            if (birthdayProp) {
+                const birthdayValue = birthdayProp.getFirstValue();
+                if (birthdayValue instanceof ICAL.Time) {
+                    // If it's an ICAL.Time object, format it as YYYY-MM-DD
+                    birthday = birthdayValue.toJSDate().toISOString().split('T')[0];
+                } else if (typeof birthdayValue === 'string') {
+                    // If it's a string, try to parse it
+                    const parts = birthdayValue.split('-');
+                    if (parts.length === 3) {
+                        // Full date: YYYY-MM-DD
+                        birthday = birthdayValue;
+                    } else if (parts.length === 2) {
+                        // Month and day only: --MM-DD
+                        birthday = `xxxx-${parts[0]}-${parts[1]}`;
+                    }
+                }
+            }
+    
+            return { 
+                uid, 
+                fullName, 
+                email, 
+                phone, 
+                organization: Array.isArray(organization) ? organization.join(', ') : organization,
+                title,
+                address: Array.isArray(address) ? address.join(', ') : address,
+                birthday,
+                url
+            };
         } catch (error) {
             console.error("Error parsing vCard:", error, "Raw data:", vcardData);
             return null;
